@@ -1,0 +1,92 @@
+# tensorfold-utils
+
+Standalone helpers for building **draft vocabularies** for [TensorFold](https://github.com/ashhart/TensorFold)
+and the related vLLM work ([PR #59740](https://github.com/vllm-project/vllm/pull/59740)).
+They deliberately live outside the main repo: **count a corpus wherever the text is, then merge the counts anywhere.**
+
+## Background
+
+In speculative/MTP decoding the draft model proposes tokens and the target model verifies them with its
+full vocabulary. The draft head therefore only needs to score a *subset* of the vocab: a token missing from
+the list can't be proposed, which costs a little acceptance length — **never correctness** (output stays
+byte-identical to undrafted decoding). A smaller list means proportionally fewer `lm_head` rows to read,
+which speeds up decode on bandwidth-bound hardware (DGX Spark, Macs).
+
+The list is built by ranking token frequencies over a public text corpus, always keeping low IDs and
+special tokens.
+
+## Requirements
+
+- [uv](https://docs.astral.sh/uv/) — everything runs as PEP 723 uv scripts (`tokenizers==0.22.2` pinned,
+  Python ≥ 3.11). No venv, no repo install.
+
+## Usage
+
+Everything goes through the single entry point `tf-util`, which dispatches to the two underlying scripts
+and passes all remaining arguments through verbatim.
+
+```bash
+# Count a corpus and/or write a draft vocab
+tf-util make-vocab TOKENIZER_JSON OUT.txt [--size 32768] [--min-count 10] \
+        [--keep-below 1024] [--max-bytes 2000000] [--added-tokens] \
+        [--counts-out counts.json] 'corpus/**/*.py' ...
+
+# Sum counts files, then apply the same selection
+tf-util merge TOKENIZER_JSON OUT.txt [--size 32768] [--min-count 10] \
+        [--added-tokens] a.json b.json ...
+```
+
+You can also run the underlying scripts directly with `uv run draft_vocab.py ...` /
+`uv run merge_draft_vocab.py ...` — same behavior.
+
+### `make-vocab` (`draft_vocab.py`)
+
+Tokenizes the corpus files and writes a sorted, one-ID-per-line draft vocabulary: all IDs below
+`--keep-below` (default 1024), optionally all tokenizer added tokens (`--added-tokens`), then
+frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest unused IDs.
+
+`--counts-out FILE` additionally dumps the raw per-ID counts as JSON. **This is the important mode for the
+split workflow**: you only need the tokenizer + corpus here — the final `--size`/`--min-count` decisions
+happen later at merge time.
+
+### `merge` (`merge_draft_vocab.py`)
+
+Sums the counts from one or more counts files and applies exactly the same selection rules, so the result
+is **byte-identical** to counting the union corpus in a single run (verified with `cmp`). The counts files
+are small (one entry per appearing ID, KBs–MBs), so they ship easily.
+
+The JSON stats include `coverage` — the fraction of corpus tokens covered by the selected vocab, i.e. the
+expected acceptance ceiling *on that corpus*.
+
+## Workflow: corpus split across machines
+
+1. Copy `draft_vocab.py` and the model's `tokenizer.json` to each machine holding text.
+   **The tokenizer revision must be identical everywhere** — mismatched vocab IDs corrupt the counts.
+2. On each machine:
+   ```bash
+   tf-util make-vocab tokenizer.json local.txt 'code/**/*.py' --counts-out local.json
+   ```
+3. Ship the `local.json` files back (any channel).
+4. Merge once, deciding size/min-count a single time:
+   ```bash
+   tf-util merge tokenizer.json draft_vocab.txt --size 32768 --min-count 10 *.json
+   ```
+
+The output is a plain newline-separated integer ID list (the runtime pads to a multiple of 64 itself), so
+it slots into TensorFold's `draft_ids()` / a vLLM `speculative_config.draft_token_map` / SGLang
+`--speculative-token-map` style config.
+
+## Caveats
+
+- Files > 2 MB are silently skipped (`--max-bytes`) — remember this when "code everywhere" includes
+  generated blobs; adjust `--max-bytes` or split patterns.
+- Corpus choice is the quality lever: a CPython-stdlib-built list is code/English-skewed and loses
+  acceptance on other languages. Build from traffic that resembles yours, and hash your inputs
+  (`sha256sum` tokenizer + corpus manifest) if reproducibility matters — this was the repo's own pitfall.
+- `coverage` in the JSON stats is the expected acceptance ceiling *on that corpus*; real traffic elsewhere
+  can differ a lot (that gap is what the SVD context-aware selector in the vLLM thread addresses).
+
+## Provenance
+
+Both scripts are copies of `tools/draft_vocab.py` (modified) and `tools/merge_draft_vocab.py` in the
+TensorFold repo; the repo itself is back to stock.
