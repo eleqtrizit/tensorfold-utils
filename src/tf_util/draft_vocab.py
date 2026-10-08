@@ -115,6 +115,32 @@ def expand_paths(paths: list[str], excludes: list[str] | None = None) -> list[st
     return sorted(files)
 
 
+def looks_like_text(path: str, sniff: int = 8192) -> bool:
+    """Cheap binary sniff (git's heuristic): read the first `sniff` bytes and
+    reject on a NUL byte or known magic numbers. Binary blobs almost always
+    contain a NUL early; real text virtually never does.
+    """
+    try:
+        with open(path, "rb") as handle:
+            head = handle.read(sniff)
+    except OSError:
+        return False
+    if not head:
+        return True                        # empty file: nothing to tokenize anyway
+    if b"\x00" in head:
+        return False
+    # common magic numbers: images, archives, executables, pdf, sqlite, wasm, etc.
+    magics = (b"\x89PNG", b"\xff\xd8\xff", b"GIF8", b"BM", b"\x00\x00\x01\x00",
+              b"\x00\x00\x02\x00",          # png, jpeg, gif, bmp, ico, cur
+              b"PK\x03\x04", b"\x1f\x8b", b"\x04\x22\x4d\x18",   # zip, gzip, lz4
+              b"7z\xbc\xaf\x27\x1c", b"Rar!", b"\xfd7zXZ\x00",  # 7z, rar, xz
+              b"\x7fELF", b"MZ", b"\xfe\xed\xfa",          # elf, pe, mach-o
+              b"%PDF", b"SQLite format 3\x00", b"\x00asm")   # pdf, sqlite, wasm
+    if any(head.startswith(m) for m in magics):
+        return False
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="tf-util make-vocab")
     p.add_argument("tokenizer", help="path to tokenizer.json OR a Hugging Face repo id "
@@ -135,6 +161,8 @@ def main(argv: list[str] | None = None) -> int:
     status = Status()
     for path in expand_paths(args.path, args.exclude):
         status.update(path, used, total)
+        if not looks_like_text(path):
+            continue
         try:
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()

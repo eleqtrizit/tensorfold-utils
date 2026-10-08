@@ -51,7 +51,8 @@ substring: any file whose path contains it is skipped (repeatable, e.g. `-e .ven
 A built-in `ALWAYS_EXCLUDE` list is applied in the background on top of `-e` (VCS internals,
 node_modules/venv-like caches, build outputs, IDE/agent dirs like `.claude`/`.pi`/`.agents`/`.codex`,
 logs/temp/secrets — full list in `ALWAYS_EXCLUDE` in `draft_vocab.py`); excluded dirs are pruned so
-`os.walk` never even descends into them.
+`os.walk` never even descends into them. A cheap binary sniff (NUL byte / magic numbers in the
+first 8KB, git's heuristic) rejects non-text files before decoding; see `looks_like_text`.
 Tokenizes every matched
 file in full (no size limit) and writes a per-host counts JSON — default `<hostname>.json`
 (e.g. `vyper.json`), override with `-o`. The JSON has `host`, `count_files`, `count_tokens`, `counts`.

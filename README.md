@@ -71,7 +71,9 @@ caches, `site-packages/`, `.ipynb_checkpoints`), build outputs (`target/`, `buil
 state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `.copilot*`,
 `.continue`, `.windsurf`, `.codeium`, `.tabnine`), and caches/logs/temp/secrets (`.cache/`,
 `coverage/`, `.terraform/`, `.DS_Store`, `Thumbs.db`, `.log`, `.tmp`, `.bak`, `.env`, `.pem`,
-`id_rsa`). The full list lives in `ALWAYS_EXCLUDE` in `draft_vocab.py`.
+`id_rsa`). The full list lives in `ALWAYS_EXCLUDE` in `draft_vocab.py`. A cheap binary sniff (git's
+heuristic: NUL byte or known magic numbers — PNG/zip/ELF/PDF/SQLite/… — in the first 8KB) rejects
+non-text files before they're decoded, so blobs never poison the counts.
 **This is the counting half of the split workflow** — no size/limit decisions
 happen here; those all happen at merge time. A live status line (braille spinner + running `files`/
 `tokens` counts + the current path) is drawn on stderr while it works, then cleared for the final

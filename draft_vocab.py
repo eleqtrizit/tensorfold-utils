@@ -154,6 +154,30 @@ def expand_paths(paths: list[str], excludes: list[str] | None = None) -> list[st
     return sorted(files)
 
 
+def looks_like_text(path: str, sniff: int = 8192) -> bool:
+    """Cheap binary sniff (git's heuristic): NUL byte or known magic numbers in the
+    first `sniff` bytes -> binary. Binary blobs almost always contain a NUL early.
+    """
+    try:
+        with open(path, "rb") as handle:
+            head = handle.read(sniff)
+    except OSError:
+        return False
+    if not head:
+        return True
+    if b"\x00" in head:
+        return False
+    magics = (b"\x89PNG", b"\xff\xd8\xff", b"GIF8", b"BM", b"\x00\x00\x01\x00",
+              b"\x00\x00\x02\x00",
+              b"PK\x03\x04", b"\x1f\x8b", b"\x04\x22\x4d\x18",
+              b"7z\xbc\xaf\x27\x1c", b"Rar!", b"\xfd7zXZ\x00",
+              b"\x7fELF", b"MZ", b"\xfe\xed\xfa",
+              b"%PDF", b"SQLite format 3\x00", b"\x00asm")
+    if any(head.startswith(m) for m in magics):
+        return False
+    return True
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("tokenizer", help="path to tokenizer.json OR a Hugging Face repo id "
@@ -173,6 +197,8 @@ def main() -> int:
     status = Status()
     for path in expand_paths(args.path, args.exclude):
         status.update(path, used, total)
+        if not looks_like_text(path):
+            continue
         try:
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
