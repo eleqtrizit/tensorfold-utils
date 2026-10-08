@@ -59,12 +59,29 @@ class Status:
         sys.stderr.flush()
 
 
+# Always skipped, in the background, on top of any -e patterns: VCS internals and
+# dependency/build caches — machine-generated, language-skewed, huge, and pure noise for
+# corpus stats. Substring match, so e.g. `.git` catches `.git/hooks/pre-commit` too.
+ALWAYS_EXCLUDE = (
+    ".git", ".hg", ".svn",
+    "node_modules",
+    ".venv", "venv/", ".tox", ".nox",
+    "__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".hypothesis",
+    "site-packages/", ".eggs/", "egg-info",
+    "target/",                    # rust
+    "build/", "dist/", "vendor/",
+    ".gradle/", ".idea/", ".vscode/",
+    ".next/", ".nuxt/", ".cache/", "coverage/", "bower_components/",
+)
+
+
 def expand_paths(paths: list[str], excludes: list[str] | None = None) -> list[str]:
     """Expand each path: a file is itself, a directory is walked recursively, a glob is expanded.
 
     `excludes` are substrings: any path containing one is dropped (e.g. -e .venv -e node_modules).
+    ALWAYS_EXCLUDE is applied on top of them unconditionally (see its docstring above).
     """
-    excludes = excludes or []
+    excludes = list(ALWAYS_EXCLUDE) + (excludes or [])
 
     def excluded(path: str) -> bool:
         return any(pat in path for pat in excludes)
@@ -75,9 +92,11 @@ def expand_paths(paths: list[str], excludes: list[str] | None = None) -> list[st
             if not excluded(path):
                 files.add(path)
         elif os.path.isdir(path):
-            files.update(os.path.join(root, name)
-                         for root, _, names in os.walk(path) for name in names
-                         if not excluded(os.path.join(root, name)))
+            for root, dirs, names in os.walk(path):
+                # prune excluded dirs in place so os.walk never descends into them
+                dirs[:] = [d for d in dirs if not excluded(os.path.join(root, d, ''))]
+                files.update(f for f in (os.path.join(root, name) for name in names)
+                             if not excluded(f))
         else:
             matched = glob.glob(path, recursive=True)
             files.update(f for f in matched if os.path.isfile(f) and not excluded(f))
