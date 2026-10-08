@@ -63,9 +63,16 @@ Tokenizes the corpus files given via `-p` (repeatable: files, directories, or gl
 raw per-ID counts
 raw per-ID counts as a portable, mergeable JSON file named after the host by default (`vyper.json`),
 including a `host` key. Files whose path contains any `-e`/`--exclude` substring are skipped; a
-built-in `ALWAYS_EXCLUDE` list (`.git`, `node_modules`, `.venv`, `__pycache__`, `target/`, `dist/`,
-`vendor/`, …) is also applied in the background, always, with excluded dirs pruned from the walk
-including a `host` key. **This is the counting half of the split workflow** — no size/limit decisions
+built-in `ALWAYS_EXCLUDE` list is also applied in the background, always, with excluded dirs pruned
+from the walk entirely — VCS internals (`.git`, `.hg`, `.svn`), JS ecosystems (`node_modules`,
+`.next/`, `.nuxt/`, `.yarn/`), Python (`.venv`, `venv/`, `.tox`, `__pycache__`, mypy/pytest/ruff
+caches, `site-packages/`, `.ipynb_checkpoints`), build outputs (`target/`, `build/`, `dist/`,
+`out/`, `.gradle/`), vendored/IDE (`vendor/`, `.idea/`, `.vscode/`, swap files), AI/agent tool
+state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `.copilot*`,
+`.continue`, `.windsurf`, `.codeium`, `.tabnine`), and caches/logs/temp/secrets (`.cache/`,
+`coverage/`, `.terraform/`, `.DS_Store`, `Thumbs.db`, `.log`, `.tmp`, `.bak`, `.env`, `.pem`,
+`id_rsa`). The full list lives in `ALWAYS_EXCLUDE` in `draft_vocab.py`.
+**This is the counting half of the split workflow** — no size/limit decisions
 happen here; those all happen at merge time. A live status line (braille spinner + running `files`/
 `tokens` counts + the current path) is drawn on stderr while it works, then cleared for the final
 JSON (auto-disabled when stderr isn't a TTY, so piping stays clean).

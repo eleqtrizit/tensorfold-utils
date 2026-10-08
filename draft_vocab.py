@@ -104,15 +104,27 @@ def resolve_tokenizer(arg: str) -> str:
 # dependency/build caches — machine-generated, language-skewed, huge, and pure noise for
 # corpus stats. Substring match, so e.g. `.git` catches `.git/hooks/pre-commit` too.
 ALWAYS_EXCLUDE = (
+    # VCS internals
     ".git", ".hg", ".svn",
-    "node_modules",
-    ".venv", "venv/", ".tox", ".nox",
-    "__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".hypothesis",
-    "site-packages/", ".eggs/", "egg-info",
-    "target/",                    # rust
-    "build/", "dist/", "vendor/",
-    ".gradle/", ".idea/", ".vscode/",
-    ".next/", ".nuxt/", ".cache/", "coverage/", "bower_components/",
+    # JS ecosystems
+    "node_modules", "bower_components/", ".next/", ".nuxt/", ".yarn/", ".pnp.js",
+    "npm-debug.log", "yarn-error.log",
+    # Python
+    ".venv", "venv/", ".tox", ".nox", "__pycache__",
+    ".mypy_cache", ".pytest_cache", ".ruff_cache", ".hypothesis",
+    "site-packages/", ".eggs/", "egg-info", ".ipynb_checkpoints",
+    "pip-log.txt", "poetry.lock",
+    # Build artifacts
+    "target/", "build/", "dist/", "out/", ".gradle/", "cmake-build-debug",
+    # Vendored / IDE / editor
+    "vendor/", "_vendor/", ".idea/", ".vscode/", ".swp", ".swo", ".swn",
+    # Agent / AI tool state and caches
+    ".claude", ".pi", ".agents", ".codex", ".aider*", ".cursor", ".gemini",
+    ".copilot*", ".continue", ".windsurf", ".codeium", ".tabnine",
+    # Caches / logs / temp / secrets
+    ".cache/", "coverage/", ".sass-cache", ".terraform/", ".serverless/",
+    ".DS_Store", "Thumbs.db", ".log", ".tmp", ".bak",
+    ".env", ".pem", "id_rsa",
 )
 
 

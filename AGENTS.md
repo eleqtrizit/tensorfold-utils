@@ -48,11 +48,10 @@ downloads just `tokenizer.json` via the `hf` CLI into `$TF_TOKENIZER_CACHE` (def
 
 `-p` accepts a file, a directory (walked recursively), or a glob; repeatable. `-e`/`--exclude` takes a
 substring: any file whose path contains it is skipped (repeatable, e.g. `-e .venv -e node_modules`).
-A built-in `ALWAYS_EXCLUDE` list (`.git`, `.hg`, `.svn`, `node_modules`, `.venv`, `venv/`, `.tox`,
-`.nox`, `__pycache__`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`, `.hypothesis`, `site-packages/`,
-`.eggs/`, `egg-info`, `target/`, `build/`, `dist/`, `vendor/`, `.gradle/`, `.idea/`, `.vscode/`,
-`.next/`, `.nuxt/`, `.cache/`, `coverage/`, `bower_components/`) is applied in the background on top
-of `-e` — excluded dirs are pruned so `os.walk` never even descends into them.
+A built-in `ALWAYS_EXCLUDE` list is applied in the background on top of `-e` (VCS internals,
+node_modules/venv-like caches, build outputs, IDE/agent dirs like `.claude`/`.pi`/`.agents`/`.codex`,
+logs/temp/secrets — full list in `ALWAYS_EXCLUDE` in `draft_vocab.py`); excluded dirs are pruned so
+`os.walk` never even descends into them.
 Tokenizes every matched
 file in full (no size limit) and writes a per-host counts JSON — default `<hostname>.json`
 (e.g. `vyper.json`), override with `-o`. The JSON has `host`, `count_files`, `count_tokens`, `counts`.
