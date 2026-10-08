@@ -5,6 +5,7 @@ and the related vLLM work ([PR #59740](https://github.com/vllm-project/vllm/pull
 the main repo on purpose: count a corpus wherever the text is, then merge the counts anywhere.
 
 **Always update README.md, if needed, before git add and commit.**
+**Always bump version (pyproject.toml) before git add and commit.**
 
 ## How to update AGENTS.md
 
