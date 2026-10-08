@@ -1,11 +1,10 @@
 """tf-util — single entry point for the TensorFold draft-vocabulary helpers.
 
-  tf-util make-vocab TOKENIZER_JSON OUT.txt [--size N] [--min-count N] [--keep-below N]
-                [--max-bytes N] [--added-tokens] [--counts-out FILE] 'CORPUS_GLOB' ...
-  tf-util merge TOKENIZER_JSON OUT.txt [--size N] [--min-count N] [--added-tokens] COUNTS.json ...
+  tf-util make-vocab TOKENIZER_JSON -p PATH [-p PATH ...] [-o OUT.json]
+  tf-util merge TOKENIZER_JSON OUT.txt [--size N] [--min-count N] [--keep-below N] [--added-tokens] COUNTS.json ...
 
-  make-vocab -> tf_util.draft_vocab        (count a corpus and/or select a vocab)
-  merge      -> tf_util.merge_draft_vocab  (sum counts files, then select)
+  make-vocab -> tf_util.draft_vocab        (count a corpus; writes <hostname>.json counts)
+  merge      -> tf_util.merge_draft_vocab  (sum counts files, apply size/min-count limits)
 """
 
 from __future__ import annotations
