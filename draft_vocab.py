@@ -152,7 +152,8 @@ EXCLUDE_EXTENSIONS = frozenset({
     # images
     ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".tiff",
     # audio / video
-    ".mp3", ".mp4", ".wav", ".flac", ".ogg", ".webm", ".avi", ".mkv", ".mov",
+    ".mp3", ".mp4", ".m4a", ".m4v", ".aac", ".opus", ".wav", ".flac",
+    ".ogg", ".oga", ".webm", ".avi", ".mkv", ".mov", ".wmv", ".flv",
     # documents
     ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".epub",
     # fonts / compiled

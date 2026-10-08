@@ -73,7 +73,8 @@ state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `
 `coverage/`, `.terraform/`, `.DS_Store`, `Thumbs.db`, `.log`, `.tmp`, `.bak`, `.env`, `.pem`,
 `id_rsa`). Data/config/serialized/media extensions (`.csv`, `.json`, `.jsonl`, `.yaml`, `.toml`,
 `.parquet`, `.avro`, `.xlsx`, `.db`, `.sqlite`, `.sql`, `.h5`, `.pkl`, `.npy`, `.pt`, `.ckpt`,
-`.safetensors`, `.onnx`, `.gguf`, `.bin`, `.zip`, `.tar`, `.gz`, `.zst`, images, audio/video,
+`.safetensors`, `.onnx`, `.gguf`, `.bin`, `.zip`, `.tar`, `.gz`, `.zst`, images, audio/video
+(incl. `.m4a`/`.m4v`/`.aac`/`.opus`/`.wmv`),
 `.pdf`/Office docs, fonts, and compiled objects like `.so`/`.dll`/`.pyc`/`.jar`) live in a separate
 `EXCLUDE_EXTENSIONS` frozenset, checked first as an O(1) set lookup on the lowercased filename
 extension — unlike substring matching, `todo.org` (org-mode notes) and `index.android.js` are
