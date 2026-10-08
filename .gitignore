@@ -4,3 +4,4 @@ __pycache__/
 uv.lock
 tokenizers/
 /tmp/
+vyper.json
