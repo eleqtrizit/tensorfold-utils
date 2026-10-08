@@ -154,8 +154,8 @@ EXCLUDE_EXTENSIONS = frozenset({
     ".iso", ".img", ".dmg", ".vhd", ".vhdx", ".qcow2", ".vmdk",
     ".deb", ".rpm", ".msi", ".apk", ".ipa", ".appimage", ".snap", ".flatpak",
     ".crx", ".whl", ".egg", ".gem", ".nupkg",
-    # images (raster / raw / design; .svg kept — it's text)
-    ".png", ".jpg", ".jpeg", ".jpe", ".jfif", ".gif", ".bmp", ".dib", ".ico",
+    # images (raster / raw / design)
+    ".svg", ".png", ".jpg", ".jpeg", ".jpe", ".jfif", ".gif", ".bmp", ".dib", ".ico",
     ".cur", ".webp", ".tiff", ".tif", ".psd", ".psb", ".xcf", ".ai", ".indd",
     ".heic", ".heif", ".avif", ".svgz", ".cr2", ".cr3", ".nef", ".arw", ".dng",
     ".raf", ".orf", ".rw2", ".exr", ".hdr", ".pic", ".tga",
