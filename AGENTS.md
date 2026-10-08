@@ -29,14 +29,22 @@ frequencies over a public text corpus, always keeping low IDs and special tokens
 - `draft_vocab.py` / `merge_draft_vocab.py` — self-contained PEP 723 copies of the same logic
   (`tokenizers==0.22.2` pinned, Python ≥ 3.11; originals: `tools/draft_vocab.py` modified and
   `tools/merge_draft_vocab.py` in the TensorFold repo), for shipping to machines without the package.
+  Each inlines its own `resolve_tokenizer` (shelling out to the `hf` CLI) so HF-id resolution works
+  without the package; the shared copy lives in `src/tf_util/hf_tokenizer.py`.
 
 ## Commands
 
 ### `tf-util make-vocab` — count a corpus
 
 ```bash
-tf-util make-vocab TOKENIZER_JSON -p PATH [-p PATH ...] [-o OUT.json]
+tf-util make-vocab TOKENIZER -p PATH [-p PATH ...] [-o OUT.json]
 ```
+
+`TOKENIZER` is a local `tokenizer.json` path **or** a Hugging Face repo id (`org/model`,
+`org/model@revision`, or a bare id like `gpt2`). For a repo id, `hf_tokenizer.resolve_tokenizer`
+downloads just `tokenizer.json` via the `hf` CLI into `$TF_TOKENIZER_CACHE` (default
+`/tmp/tokenizers`)/`<repo>`/`tokenizer.json` and reuses the cached file; pin a revision with
+`@revision` for byte-reproducible counts.
 
 `-p` accepts a file, a directory (walked recursively), or a glob; repeatable. Tokenizes every matched
 file in full (no size limit) and writes a per-host counts JSON — default `<hostname>.json`
@@ -46,8 +54,10 @@ Counting only: all selection limits live in `merge`.
 ### `tf-util merge` — sum counts, select vocab
 
 ```bash
-tf-util merge TOKENIZER_JSON OUT.txt --size 32768 --min-count 10 a.json b.json ... [--keep-below 1024] [--added-tokens]
+tf-util merge TOKENIZER OUT.txt --size 32768 --min-count 10 a.json b.json ... [--keep-below 1024] [--added-tokens]
 ```
+
+`TOKENIZER` accepts a local path or an HF repo id (same resolution as `make-vocab`).
 
 Sums the counts files, then keeps all IDs below `--keep-below` (default 1024), optionally the tokenizer's
 added tokens, then frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest unused
@@ -55,16 +65,15 @@ IDs. Merging is plain count addition, so the result equals a single run over the
 
 ## Workflow: corpus split across machines
 
-1. Copy `draft_vocab.py` and the model's `tokenizer.json` to each machine holding text. **The tokenizer
-   revision must be identical everywhere** — mismatched vocab IDs corrupt the counts.
-2. On each machine:
+1. On each machine (installed tool or standalone script) just name the model — no tokenizer copy needed:
    ```bash
-   tf-util make-vocab tokenizer.json -p code/ -o local.json
+   tf-util make-vocab org/model@revision -p code/ -o local.json
    ```
-3. Ship the `local.json` files back (any channel).
-4. Merge once, deciding size/min-count a single time:
+   Pin `@revision` for byte-reproducible counts; `hf` must be on PATH (`HF_TOKEN` for gated repos).
+2. Ship the `local.json` files back (any channel).
+3. Merge once, deciding size/min-count a single time:
    ```bash
-   tf-util merge tokenizer.json draft_vocab.txt --size 32768 --min-count 10 *.json
+   tf-util merge org/model@revision draft_vocab.txt --size 32768 --min-count 10 *.json
    ```
 
 The output format matches the engine's expectation (plain newline-separated integer IDs; runtime pads to

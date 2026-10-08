@@ -20,6 +20,8 @@ special tokens.
 ## Requirements
 
 - [uv](https://docs.astral.sh/uv/) — `tokenizers==0.22.2` pinned, Python ≥ 3.11.
+- The [`hf` CLI](https://huggingface.co/docs/huggingface_hub/cli) — only needed when you pass a
+  Hugging Face repo id instead of a local `tokenizer.json` path (see below).
 
 ## Install
 
@@ -39,15 +41,19 @@ commands.
 
 ```bash
 # Count a corpus on this machine; writes counts JSON (default: <hostname>.json, e.g. vyper.json)
-tf-util make-vocab TOKENIZER_JSON -p PATH [-p PATH ...] [-o OUT.json]
+tf-util make-vocab TOKENIZER -p PATH [-p PATH ...] [-o OUT.json]
 
 # Sum counts files, then select the vocab (all limits live here)
-tf-util merge TOKENIZER_JSON OUT.txt [--size 32768] [--min-count 10] \
+tf-util merge TOKENIZER OUT.txt [--size 32768] [--min-count 10] \
         [--keep-below 1024] [--added-tokens] a.json b.json ...
 ```
 
-`-p` accepts a file, a directory (walked recursively), or a glob; repeat it for multiple paths.
-There is no `--max-bytes` limit anymore — every matching file is read in full.
+`TOKENIZER` is either a path to a local `tokenizer.json` **or** a Hugging Face repo id
+(`org/model`, `org/model@revision`, or just `gpt2`). For a repo id, `tf-util` downloads only
+`tokenizer.json` via the `hf` CLI into `$TF_TOKENIZER_CACHE` (default `/tmp/tokenizers`)/`<repo_id>`/`tokenizer.json`
+on first use and reuses the cached file afterwards — so you no longer have to copy the tokenizer
+to every machine, just name the model. Pin a revision with `@revision` (branch/tag/commit) so every
+machine uses identical vocab IDs.
 
 ### `make-vocab`
 
@@ -73,16 +79,17 @@ expected acceptance ceiling *on that corpus*.
 
 ## Workflow: corpus split across machines
 
-1. Copy `draft_vocab.py` and the model's `tokenizer.json` to each machine holding text.
-   **The tokenizer revision must be identical everywhere** — mismatched vocab IDs corrupt the counts.
-2. On each machine (installed tool or the standalone script):
+1. On each machine (installed tool or standalone script) just name the model — no tokenizer copy needed:
    ```bash
-   tf-util make-vocab tokenizer.json -p code/ -o local.json
+   tf-util make-vocab nvidia/Nemotron-Super-3.5-GA-FINAL-row105-QAD-PreStitched-BoostedMTP -p code/ -o local.json
    ```
-3. Ship the `local.json` files back (any channel).
-4. Merge once, deciding size/min-count a single time:
+   Pin a revision with `@revision` if you want byte-reproducible counts. The `hf` CLI must be on
+   PATH (and `HF_TOKEN` set for gated repos).
+2. Ship the `local.json` files back (any channel).
+3. Merge once, deciding size/min-count a single time:
    ```bash
-   tf-util merge tokenizer.json draft_vocab.txt --size 32768 --min-count 10 *.json
+   tf-util merge nvidia/Nemotron-Super-3.5-GA-FINAL-row105-QAD-PreStitched-BoostedMTP draft_vocab.txt \
+       --size 32768 --min-count 10 *.json
    ```
 
 The output is a plain newline-separated integer ID list (the runtime pads to a multiple of 64 itself), so

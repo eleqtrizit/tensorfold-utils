@@ -17,6 +17,8 @@ import sys
 
 from tokenizers import Tokenizer
 
+from tf_util.hf_tokenizer import resolve_tokenizer, cache_root
+
 
 def expand_paths(paths: list[str]) -> list[str]:
     """Expand each path: a file is itself, a directory is walked recursively, a glob is expanded."""
@@ -35,14 +37,17 @@ def expand_paths(paths: list[str]) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="tf-util make-vocab")
-    p.add_argument("tokenizer", help="path to tokenizer.json (revision must match across machines)")
+    p.add_argument("tokenizer", help="path to tokenizer.json OR a Hugging Face repo id "
+                   "(`org/model` or `org/model@revision`); fetched into $TF_TOKENIZER_CACHE "
+                   f"(default {cache_root()}/<repo>/tokenizer.json) on first use")
     p.add_argument("-p", "--path", action="append", required=True, metavar="PATH",
                    help="corpus file, directory (walked recursively), or glob (repeatable)")
     p.add_argument("-o", "--out", default=None, metavar="FILE",
                    help="output counts JSON (default: <hostname>.json)")
     args = p.parse_args(argv)
 
-    tok = Tokenizer.from_file(args.tokenizer)
+    tok_path = resolve_tokenizer(args.tokenizer)
+    tok = Tokenizer.from_file(tok_path)
     counts: collections.Counter = collections.Counter()
     total = used = 0
     for path in expand_paths(args.path):

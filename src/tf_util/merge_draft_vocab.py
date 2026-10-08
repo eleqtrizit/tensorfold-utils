@@ -13,10 +13,14 @@ import sys
 
 from tokenizers import Tokenizer
 
+from tf_util.hf_tokenizer import resolve_tokenizer, cache_root
+
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="tf-util merge")
-    p.add_argument("tokenizer")
+    p.add_argument("tokenizer", help="path to tokenizer.json OR a Hugging Face repo id "
+                   "(`org/model` or `org/model@revision`); fetched into $TF_TOKENIZER_CACHE "
+                   f"(default {cache_root()}/<repo>/tokenizer.json) on first use")
     p.add_argument("out")
     p.add_argument("counts", nargs="+", help="counts JSON files written by make-vocab --counts-out")
     p.add_argument("--size", type=int, default=32768)
@@ -26,7 +30,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--added-tokens", action="store_true", help="always keep the tokenizer's added (special) tokens")
     args = p.parse_args(argv)
 
-    tok = Tokenizer.from_file(args.tokenizer)
+    tok_path = resolve_tokenizer(args.tokenizer)
+    tok = Tokenizer.from_file(tok_path)
     counts: collections.Counter = collections.Counter()
     files = tokens = 0
     for path in args.counts:
@@ -38,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
 
     keep = set(range(args.keep_below))
     if args.added_tokens:
-        keep |= {t["id"] for t in json.loads(open(args.tokenizer).read())["added_tokens"]}
+        keep |= {t["id"] for t in json.loads(open(tok_path).read())["added_tokens"]}
     for tid, count in counts.most_common():
         if len(keep) >= args.size or count < args.min_count:
             break
