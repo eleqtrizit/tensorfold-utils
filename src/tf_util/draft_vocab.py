@@ -87,32 +87,56 @@ ALWAYS_EXCLUDE = (
     ".cache/", "coverage/", ".sass-cache", ".terraform/", ".serverless/",
     ".DS_Store", "Thumbs.db", ".log", ".tmp", ".bak",
     ".env", ".pem", "id_rsa",
-    # Data / config / serialized / media formats (not prose; tokenizing skews counts).
-    # Note: these are path substrings, so ".json" also covers ".jsonl".
+)
+
+# Non-prose file extensions, checked as an O(1) set lookup on the filename's
+# extension (lowercased) BEFORE any substring matching — extension hits short-
+# circuit the whole exclusion path. Deliberately NOT substrings: `.json` as a
+# substring would wrongly match `index.json.js`, and `.o` would kill `todo.org`.
+# Composites are spelled out: `.jsonl`, `.ndjson`, `.docx`, `.tar.gz` (-> .gz).
+EXCLUDE_EXTENSIONS = frozenset({
+    # tabular
     ".csv", ".tsv", ".psv", ".parquet", ".avro", ".orc", ".feather", ".arrow",
-    ".json", ".yaml", ".yml", ".toml", ".xml", ".ini", ".cfg", ".conf",
-    ".xlsx", ".xls", ".ods", ".db", ".sqlite", ".sqlite3", ".mdb", ".sql",
+    ".xlsx", ".xls", ".ods",
+    # config / structured
+    ".json", ".jsonl", ".ndjson", ".yaml", ".yml", ".toml", ".xml", ".ini",
+    ".cfg", ".conf",
+    # databases
+    ".db", ".sqlite", ".sqlite3", ".mdb", ".sql",
+    # ML / serialized
     ".h5", ".hdf5", ".pkl", ".pickle", ".npy", ".npz", ".pt", ".pth", ".ckpt",
     ".safetensors", ".onnx", ".gguf", ".bin",
+    # archives
     ".zip", ".tar", ".gz", ".bz2", ".xz", ".zst", ".7z", ".rar",
+    # images
     ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".tiff",
+    # audio / video
     ".mp3", ".mp4", ".wav", ".flac", ".ogg", ".webm", ".avi", ".mkv", ".mov",
+    # documents
     ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".epub",
+    # fonts / compiled
     ".woff", ".woff2", ".ttf", ".otf", ".eot", ".so", ".dylib", ".dll", ".exe",
     ".wasm", ".pyc", ".pyo", ".class", ".jar",
-)
+})
+
+
+def _ext_excluded(path: str) -> bool:
+    """O(1): lowercase the path, look up its extension in EXCLUDE_EXTENSIONS."""
+    _, ext = os.path.splitext(path.lower())
+    return ext in EXCLUDE_EXTENSIONS
 
 
 def expand_paths(paths: list[str], excludes: list[str] | None = None) -> list[str]:
     """Expand each path: a file is itself, a directory is walked recursively, a glob is expanded.
 
-    `excludes` are substrings: any path containing one is dropped (e.g. -e .venv -e node_modules).
-    ALWAYS_EXCLUDE is applied on top of them unconditionally (see its docstring above).
+    Exclusion order: the O(1) extension check (`EXCLUDE_EXTENSIONS`) runs first on
+    every candidate, then the substring patterns (`ALWAYS_EXCLUDE` + user `-e`).
     """
-    excludes = list(ALWAYS_EXCLUDE) + (excludes or [])
+    excludes = excludes or []
 
     def excluded(path: str) -> bool:
-        return any(pat in path for pat in excludes)
+        return _ext_excluded(path) or any(pat in path for pat in ALWAYS_EXCLUDE) \
+            or any(pat in path for pat in excludes)
 
     files: set[str] = set()
     for path in paths:

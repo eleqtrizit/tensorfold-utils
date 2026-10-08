@@ -51,10 +51,14 @@ substring: any file whose path contains it is skipped (repeatable, e.g. `-e .ven
 A built-in `ALWAYS_EXCLUDE` list is applied in the background on top of `-e` (VCS internals,
 node_modules/venv-like caches, build outputs, IDE/agent dirs like `.claude`/`.pi`/`.agents`/`.codex`,
 logs/temp/secrets — full list in `ALWAYS_EXCLUDE` in `draft_vocab.py`); excluded dirs are pruned so
-`os.walk` never even descends into them. Data/config/serialized/media extensions (.csv, .json,
-.yaml, .parquet, .safetensors, images/audio/video, .pdf, fonts, .so/.pyc/.jar, ...) are excluded
-too — plain substrings, so .json also covers .jsonl and .doc covers .docx. A cheap binary sniff (NUL byte / magic numbers in the
-first 8KB, git's heuristic) rejects non-text files before decoding; see `looks_like_text`. Skipped
+`os.walk` never even descends into them. Data/config/serialized/media extensions (`.csv`, `.json`,
+`.jsonl`, `.yaml`, `.toml`, `.parquet`, `.safetensors`, images, audio/video, `.pdf`, fonts,
+`.so`/`.pyc`/`.jar`, ...) live in a separate `EXCLUDE_EXTENSIONS` frozenset, checked first as an
+O(1) set lookup on the lowercased filename extension — so `todo.org` (org-mode notes) and
+`index.android.js` are safe, unlike with substring matching. Exclusion order: extension set first,
+then `ALWAYS_EXCLUDE` substrings, then user `-e` patterns. A cheap binary sniff (NUL byte / magic
+numbers in the first 8KB, git's heuristic) rejects non-text files before decoding; see
+`looks_like_text`. Skipped
 files are counted (`"skipped"` in the JSON) and listed with reasons via `-v/--verbose`; the status
 line marks rejects with `skipped (binary)` rather than showing them as if tokenized.
 Tokenizes every matched

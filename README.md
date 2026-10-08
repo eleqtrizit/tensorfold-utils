@@ -71,12 +71,14 @@ caches, `site-packages/`, `.ipynb_checkpoints`), build outputs (`target/`, `buil
 state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `.copilot*`,
 `.continue`, `.windsurf`, `.codeium`, `.tabnine`), caches/logs/temp/secrets (`.cache/`,
 `coverage/`, `.terraform/`, `.DS_Store`, `Thumbs.db`, `.log`, `.tmp`, `.bak`, `.env`, `.pem`,
-`id_rsa`), and data/config/serialized/media extensions (`.csv`, `.tsv`, `.parquet`, `.avro`,
-`.feather`, `.json`, `.yaml`, `.toml`, `.xml`, `.ini`, `.xlsx`, `.db`, `.sqlite`, `.sql`,
-`.h5`, `.pkl`, `.npy`, `.npz`, `.pt`, `.ckpt`, `.safetensors`, `.onnx`, `.gguf`, `.bin`,
-`.zip`, `.tar`, `.gz`, `.zst`, image/audio/video extensions, `.pdf`/Office docs, fonts, and
-compiled objects like `.so`/`.dll`/`.pyc`/`.jar`). These are plain path substrings — `.json`
-also covers `.jsonl`, `.doc` covers `.docx`. The full list lives in `ALWAYS_EXCLUDE`. A cheap binary sniff (git's
+`id_rsa`). Data/config/serialized/media extensions (`.csv`, `.json`, `.jsonl`, `.yaml`, `.toml`,
+`.parquet`, `.avro`, `.xlsx`, `.db`, `.sqlite`, `.sql`, `.h5`, `.pkl`, `.npy`, `.pt`, `.ckpt`,
+`.safetensors`, `.onnx`, `.gguf`, `.bin`, `.zip`, `.tar`, `.gz`, `.zst`, images, audio/video,
+`.pdf`/Office docs, fonts, and compiled objects like `.so`/`.dll`/`.pyc`/`.jar`) live in a separate
+`EXCLUDE_EXTENSIONS` frozenset, checked first as an O(1) set lookup on the lowercased filename
+extension — unlike substring matching, `todo.org` (org-mode notes) and `index.android.js` are
+safe, and `index.json.js` isn't wrongly skipped. Composites are spelled out: `.jsonl`, `.ndjson`,
+`.docx`. The full list lives in `ALWAYS_EXCLUDE` / `EXCLUDE_EXTENSIONS` in `draft_vocab.py`. A cheap binary sniff (git's
 heuristic: NUL byte or known magic numbers — PNG/zip/ELF/PDF/SQLite/… — in the first 8KB) rejects
 non-text files before they're decoded, so blobs never poison the counts. Every skipped file is
 tallied and reported as `"skipped": N` in the JSON; run with `-v`/`--verbose` to print each skipped
