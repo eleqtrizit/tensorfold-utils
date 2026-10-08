@@ -6,6 +6,11 @@ the main repo on purpose: count a corpus wherever the text is, then merge the co
 
 **Always update README.md, if needed, before git add and commit.**
 
+## How to update AGENTS.md
+
+It is not a worklog or decision tracker. It is only to reflect the current state of the code base and
+provide fast access to entrypoints to future agents. Keep it slim and concise at all times.
+
 ## Background
 
 In speculative/MTP decoding the draft model proposes tokens and the target model verifies them with its
