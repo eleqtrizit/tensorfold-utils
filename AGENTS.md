@@ -1,5 +1,10 @@
 # tensorfold-utils
 
+All commands below always start with `tf-util`.
+
+Always update README.md, if needed, before git add and commit.
+
+
 Standalone helpers for building **draft vocabularies** for [TensorFold](https://github.com/ashhart/TensorFold)
 and the related vLLM work ([PR #59740](https://github.com/vllm-project/vllm/pull/59740)). They live outside
 the main repo on purpose: count a corpus wherever the text is, then merge the counts anywhere.

@@ -38,35 +38,35 @@ Everything goes through the single entry point `tf-util`, which dispatches to th
 commands.
 
 ```bash
-# Count a corpus and/or write a draft vocab
-tf-util make-vocab TOKENIZER_JSON OUT.txt [--size 32768] [--min-count 10] \
-        [--keep-below 1024] [--max-bytes 2000000] [--added-tokens] \
-        [--counts-out counts.json] 'corpus/**/*.py' ...
+# Count a corpus on this machine; writes counts JSON (default: <hostname>.json, e.g. vyper.json)
+tf-util make-vocab TOKENIZER_JSON -p PATH [-p PATH ...] [-o OUT.json]
 
-# Sum counts files, then apply the same selection
+# Sum counts files, then select the vocab (all limits live here)
 tf-util merge TOKENIZER_JSON OUT.txt [--size 32768] [--min-count 10] \
-        [--added-tokens] a.json b.json ...
+        [--keep-below 1024] [--added-tokens] a.json b.json ...
 ```
+
+`-p` accepts a file, a directory (walked recursively), or a glob; repeat it for multiple paths.
+There is no `--max-bytes` limit anymore — every matching file is read in full.
 
 ### `make-vocab`
 
 Alias: `uv run draft_vocab.py ...` (self-contained PEP 723 script; logic in `src/tf_util/draft_vocab.py`).
 
-Tokenizes the corpus files and writes a sorted, one-ID-per-line draft vocabulary: all IDs below
-`--keep-below` (default 1024), optionally all tokenizer added tokens (`--added-tokens`), then
-frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest unused IDs.
-
-`--counts-out FILE` additionally dumps the raw per-ID counts as JSON. **This is the important mode for the
-split workflow**: you only need the tokenizer + corpus here — the final `--size`/`--min-count` decisions
-happen later at merge time.
+Tokenizes the corpus files given via `-p` (repeatable: files, directories, or globs) and writes the
+raw per-ID counts as a portable, mergeable JSON file named after the host by default (`vyper.json`),
+including a `host` key. **This is the counting half of the split workflow** — no size/limit decisions
+happen here; those all happen at merge time.
 
 ### `merge`
 
 Alias: `uv run merge_draft_vocab.py ...`, logic in `src/tf_util/merge_draft_vocab.py`.
 
-Sums the counts from one or more counts files and applies exactly the same selection rules, so the result
-is **byte-identical** to counting the union corpus in a single run (verified with `cmp`). The counts files
-are small (one entry per appearing ID, KBs–MBs), so they ship easily.
+Sums the counts from one or more counts files and selects the draft vocabulary: all IDs below
+`--keep-below` (default 1024), optionally all tokenizer added tokens (`--added-tokens`), then
+frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest unused IDs. The result
+is **byte-identical** to counting the union corpus in a single run (verified with `cmp`). The counts
+files are small (one entry per appearing ID, KBs–MBs), so they ship easily.
 
 The JSON stats include `coverage` — the fraction of corpus tokens covered by the selected vocab, i.e. the
 expected acceptance ceiling *on that corpus*.
@@ -77,7 +77,7 @@ expected acceptance ceiling *on that corpus*.
    **The tokenizer revision must be identical everywhere** — mismatched vocab IDs corrupt the counts.
 2. On each machine (installed tool or the standalone script):
    ```bash
-   tf-util make-vocab tokenizer.json local.txt 'code/**/*.py' --counts-out local.json
+   tf-util make-vocab tokenizer.json -p code/ -o local.json
    ```
 3. Ship the `local.json` files back (any channel).
 4. Merge once, deciding size/min-count a single time:
@@ -91,8 +91,7 @@ it slots into TensorFold's `draft_ids()` / a vLLM `speculative_config.draft_toke
 
 ## Caveats
 
-- Files > 2 MB are silently skipped (`--max-bytes`) — remember this when "code everywhere" includes
-  generated blobs; adjust `--max-bytes` or split patterns.
+- No file size limit anymore: every file matched by `-p` is read in full.
 - Corpus choice is the quality lever: a CPython-stdlib-built list is code/English-skewed and loses
   acceptance on other languages. Build from traffic that resembles yours, and hash your inputs
   (`sha256sum` tokenizer + corpus manifest) if reproducibility matters — this was the repo's own pitfall.
