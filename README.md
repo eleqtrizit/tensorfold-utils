@@ -17,13 +17,23 @@ special tokens.
 
 ## Requirements
 
-- [uv](https://docs.astral.sh/uv/) — everything runs as PEP 723 uv scripts (`tokenizers==0.22.2` pinned,
-  Python ≥ 3.11). No venv, no repo install.
+- [uv](https://docs.astral.sh/uv/) — `tokenizers==0.22.2` pinned, Python ≥ 3.11.
+
+## Install
+
+```bash
+uv tool install git+https://github.com/.../tensorfold-utils   # from a git URL
+uv tool install .                                             # or from a local checkout
+```
+
+This installs a `tf-util` executable on your PATH. The repo also ships standalone PEP 723 scripts
+(`draft_vocab.py`, `merge_draft_vocab.py`) that can be copied to a machine with just uv —
+run them with `uv run draft_vocab.py ...`.
 
 ## Usage
 
-Everything goes through the single entry point `tf-util`, which dispatches to the two underlying scripts
-and passes all remaining arguments through verbatim.
+Everything goes through the single entry point `tf-util`, which dispatches to the two underlying
+commands.
 
 ```bash
 # Count a corpus and/or write a draft vocab
@@ -36,10 +46,9 @@ tf-util merge TOKENIZER_JSON OUT.txt [--size 32768] [--min-count 10] \
         [--added-tokens] a.json b.json ...
 ```
 
-You can also run the underlying scripts directly with `uv run draft_vocab.py ...` /
-`uv run merge_draft_vocab.py ...` — same behavior.
+### `make-vocab`
 
-### `make-vocab` (`draft_vocab.py`)
+Alias: `uv run draft_vocab.py ...` (self-contained PEP 723 script; logic in `src/tf_util/draft_vocab.py`).
 
 Tokenizes the corpus files and writes a sorted, one-ID-per-line draft vocabulary: all IDs below
 `--keep-below` (default 1024), optionally all tokenizer added tokens (`--added-tokens`), then
@@ -49,7 +58,9 @@ frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest u
 split workflow**: you only need the tokenizer + corpus here — the final `--size`/`--min-count` decisions
 happen later at merge time.
 
-### `merge` (`merge_draft_vocab.py`)
+### `merge`
+
+Alias: `uv run merge_draft_vocab.py ...`, logic in `src/tf_util/merge_draft_vocab.py`.
 
 Sums the counts from one or more counts files and applies exactly the same selection rules, so the result
 is **byte-identical** to counting the union corpus in a single run (verified with `cmp`). The counts files
@@ -62,7 +73,7 @@ expected acceptance ceiling *on that corpus*.
 
 1. Copy `draft_vocab.py` and the model's `tokenizer.json` to each machine holding text.
    **The tokenizer revision must be identical everywhere** — mismatched vocab IDs corrupt the counts.
-2. On each machine:
+2. On each machine (installed tool or the standalone script):
    ```bash
    tf-util make-vocab tokenizer.json local.txt 'code/**/*.py' --counts-out local.json
    ```
@@ -86,7 +97,10 @@ it slots into TensorFold's `draft_ids()` / a vLLM `speculative_config.draft_toke
 - `coverage` in the JSON stats is the expected acceptance ceiling *on that corpus*; real traffic elsewhere
   can differ a lot (that gap is what the SVD context-aware selector in the vLLM thread addresses).
 
-## Provenance
+## Layout & provenance
 
-Both scripts are copies of `tools/draft_vocab.py` (modified) and `tools/merge_draft_vocab.py` in the
-TensorFold repo; the repo itself is back to stock.
+- `src/tf_util/` — installable package (`uv tool install`); `tf-util` is its console script.
+- `draft_vocab.py` / `merge_draft_vocab.py` — self-contained PEP 723 copies of `tools/draft_vocab.py`
+  (modified) and `tools/merge_draft_vocab.py` in the TensorFold repo (the repo itself is back to stock),
+  for shipping to machines where the package isn't installed.
+- The two implementations were verified to produce byte-identical output.

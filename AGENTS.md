@@ -22,10 +22,13 @@ tf-util make-vocab ... # same args as draft_vocab.py
 tf-util merge      ... # same args as merge_draft_vocab.py
 ```
 
-A uv script that dispatches to the two scripts below, passing all remaining
-arguments through verbatim. No behavior of its own.
+`src/tf_util/` is an installable package (`uv tool install .` or a git URL). The `tf-util`
+console script dispatches: `make-vocab` -> `tf_util.draft_vocab.main`, `merge` ->
+`tf_util.merge_draft_vocab.main`. Logic lives in the package modules; the root-level scripts are
+self-contained PEP 723 portable copies (verified byte-identical to the package). All commands take
+the remaining arguments through verbatim.
 
-Both are PEP 723 uv scripts (`tokenizers==0.22.2` pinned, Python >= 3.11) — run with
+All are PEP 723 uv scripts where standalone (`tokenizers==0.22.2` pinned, Python >= 3.11) — run with
 `uv run <script> ...`, no venv or repo install needed. They are copies of `tools/draft_vocab.py`
 (modified) and `tools/merge_draft_vocab.py` in the TensorFold repo; the repo itself is back to stock.
 
