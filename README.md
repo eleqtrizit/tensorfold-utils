@@ -73,9 +73,13 @@ state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `
 `coverage/`, `.terraform/`, `.DS_Store`, `Thumbs.db`, `.log`, `.tmp`, `.bak`, `.env`, `.pem`,
 `id_rsa`). Data/config/serialized/media extensions (`.csv`, `.json`, `.jsonl`, `.yaml`, `.toml`,
 `.parquet`, `.avro`, `.xlsx`, `.db`, `.sqlite`, `.sql`, `.h5`, `.pkl`, `.npy`, `.pt`, `.ckpt`,
-`.safetensors`, `.onnx`, `.gguf`, `.bin`, `.zip`, `.tar`, `.gz`, `.zst`, images, audio/video
-(incl. `.m4a`/`.m4v`/`.aac`/`.opus`/`.wmv`),
-`.pdf`/Office docs, fonts, and compiled objects like `.so`/`.dll`/`.pyc`/`.jar`) live in a separate
+`.safetensors`, `.onnx`, `.gguf`, `.bin`, `.msgpack`/`.bson`/`.cbor`, archives/packages/disk images
+(`.zip`, `.tar`, `.gz`, `.zst`, `.7z`, `.iso`, `.dmg`, `.apk`, `.deb`, `.rpm`, `.msi`, `.whl`, ...),
+images (`.png`...`.heic`, `.avif`, `.psd`, camera RAW), audio (`.mp3`, `.m4a`, `.flac`, `.opus`,
+`.wma`, `.mid`, ...), video (`.mp4`, `.mkv`, `.mov`, `.webm`, ...), documents (`.pdf`, Office,
+`.epub`, `.mobi`, `.djvu`, `.rtf`), fonts, compiled/native code (`.exe`, `.dll`, `.so`, `.o`, `.a`,
+`.obj`, `.pyc`, `.jar`, `.wasm`, `.pdb`, ...), and 3D/CAD (`.stl`, `.fbx`, `.glb`, `.blend`,
+`.dwg`, ...). These live in a separate
 `EXCLUDE_EXTENSIONS` frozenset, checked first as an O(1) set lookup on the lowercased filename
 extension — unlike substring matching, `todo.org` (org-mode notes) and `index.android.js` are
 safe, and `index.json.js` isn't wrongly skipped. Composites are spelled out: `.jsonl`, `.ndjson`,

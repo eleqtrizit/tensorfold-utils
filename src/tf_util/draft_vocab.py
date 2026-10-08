@@ -105,19 +105,38 @@ EXCLUDE_EXTENSIONS = frozenset({
     ".db", ".sqlite", ".sqlite3", ".mdb", ".sql",
     # ML / serialized
     ".h5", ".hdf5", ".pkl", ".pickle", ".npy", ".npz", ".pt", ".pth", ".ckpt",
-    ".safetensors", ".onnx", ".gguf", ".bin",
-    # archives
-    ".zip", ".tar", ".gz", ".bz2", ".xz", ".zst", ".7z", ".rar",
-    # images
-    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".tiff",
-    # audio / video
-    ".mp3", ".mp4", ".m4a", ".m4v", ".aac", ".opus", ".wav", ".flac",
-    ".ogg", ".oga", ".opus", ".webm", ".avi", ".mkv", ".mov", ".wmv", ".flv",
+    ".safetensors", ".onnx", ".gguf", ".bin", ".msgpack", ".bson", ".cbor",
+    ".pb", ".prototxt", ".caffemodel", ".mlmodel", ".mlpackage",
+    # archives / packages / disk images
+    ".zip", ".tar", ".gz", ".tgz", ".bz2", ".tbz2", ".xz", ".txz", ".zst",
+    ".7z", ".rar", ".cab", ".lz", ".lz4", ".br",
+    ".iso", ".img", ".dmg", ".vhd", ".vhdx", ".qcow2", ".vmdk",
+    ".deb", ".rpm", ".msi", ".apk", ".ipa", ".appimage", ".snap", ".flatpak",
+    ".crx", ".whl", ".egg", ".gem", ".nupkg",
+    # images (raster / raw / design; .svg kept — it's text)
+    ".png", ".jpg", ".jpeg", ".jpe", ".jfif", ".gif", ".bmp", ".dib", ".ico",
+    ".cur", ".webp", ".tiff", ".tif", ".psd", ".psb", ".xcf", ".ai", ".indd",
+    ".heic", ".heif", ".avif", ".svgz", ".cr2", ".cr3", ".nef", ".arw", ".dng",
+    ".raf", ".orf", ".rw2", ".exr", ".hdr", ".pic", ".tga",
+    # audio
+    ".mp3", ".mp2", ".m4a", ".m4b", ".aac", ".opus", ".wav", ".wave", ".flac",
+    ".ogg", ".oga", ".ogx", ".opus", ".wma", ".aiff", ".aif", ".au", ".ape",
+    ".wv", ".mka", ".mid", ".midi", ".caf", ".dsf", ".amr", ".ac3", ".dts",
+    # video
+    ".mp4", ".m4v", ".mpg", ".mpeg", ".webm", ".avi", ".mkv", ".mov", ".wmv",
+    ".flv", ".mts", ".m2ts", ".3gp", ".3g2", ".ogv", ".vob", ".rm",
+    ".rmvb", ".asf", ".divx", ".f4v",
     # documents
-    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".epub",
-    # fonts / compiled
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xlsb", ".epub", ".mobi",
+    ".azw", ".azw3", ".djvu", ".xps", ".odt", ".rtf",
+    # fonts / compiled / native code (note: .ts intentionally absent — TypeScript is prose)
     ".woff", ".woff2", ".ttf", ".otf", ".eot", ".so", ".dylib", ".dll", ".exe",
-    ".wasm", ".pyc", ".pyo", ".class", ".jar",
+    ".sys", ".drv", ".ocx", ".ax", ".lib", ".pdb", ".idb", ".elf",
+    ".ko", ".o", ".a", ".obj", ".wasm", ".pyc", ".pyo", ".class", ".jar",
+    ".war", ".ear", ".node", ".rlib", ".crate",
+    # 3D / CAD / design assets
+    ".stl", ".fbx", ".glb", ".blend", ".3ds", ".dae", ".usd", ".usda",
+    ".usdc", ".usdz", ".skp", ".dwg", ".dxf",
 })
 
 

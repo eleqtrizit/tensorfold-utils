@@ -51,9 +51,11 @@ substring: any file whose path contains it is skipped (repeatable, e.g. `-e .ven
 A built-in `ALWAYS_EXCLUDE` list is applied in the background on top of `-e` (VCS internals,
 node_modules/venv-like caches, build outputs, IDE/agent dirs like `.claude`/`.pi`/`.agents`/`.codex`,
 logs/temp/secrets — full list in `ALWAYS_EXCLUDE` in `draft_vocab.py`); excluded dirs are pruned so
-`os.walk` never even descends into them. Data/config/serialized/media extensions (`.csv`, `.json`,
-`.jsonl`, `.yaml`, `.toml`, `.parquet`, `.safetensors`, images, audio/video, `.pdf`, fonts,
-`.so`/`.pyc`/`.jar`, ...) live in a separate `EXCLUDE_EXTENSIONS` frozenset, checked first as an
+`os.walk` never even descends into them. `EXCLUDE_EXTENSIONS` (~200 extensions: tabular, config,
+databases, ML artifacts, archives/packages/disk images, images incl. RAW/HEIC/PSD, audio, video,
+documents, fonts, compiled/native code incl. `.exe`/`.dll`/`.o`/`.a`, 3D/CAD) is an O(1) frozenset
+lookup on the lowercased extension, checked before substrings. `.ts` intentionally absent —
+TypeScript is prose. So  `EXCLUDE_EXTENSIONS` frozenset, checked first as an
 O(1) set lookup on the lowercased filename extension — so `todo.org` (org-mode notes) and
 `index.android.js` are safe, unlike with substring matching. Exclusion order: extension set first,
 then `ALWAYS_EXCLUDE` substrings, then user `-e` patterns. A cheap binary sniff (NUL byte / magic
