@@ -110,6 +110,55 @@ Both commands print a JSON one-liner to stdout naming every file they wrote (`"w
 stats; `merge`'s stats include `coverage` — the fraction of corpus tokens covered by the selected
 vocab, i.e. the expected acceptance ceiling *on that corpus*.
 
+### How merge picks tokens (and why `--keep-below 1024` / `--added-tokens` matter)
+
+The final list is built in four steps, in this order:
+
+1. **Keep the ID prefix** — every ID `< --keep-below` (default 1024) is kept unconditionally.
+2. **Optionally keep added tokens** — with `--added-tokens`, the tokenizer's special/added tokens
+   are kept *wherever they live* in the vocab.
+3. **Fill by frequency** — remaining IDs ranked by summed corpus count, taken down to `--size`
+   or until the `--min-count` floor is hit.
+4. **Pad** — if still short of `--size`, the lowest unused IDs fill the rest (a small corpus still
+   yields a valid fixed-size list).
+
+**Why are low IDs "always important"? They're not, exactly — it's a heuristic that works well for
+byte-level BPE tokenizers (GPT-2, Qwen, GLM, Mistral, ...), and here's the actual reasoning:**
+
+- **IDs 0–255 are the 256 byte tokens** — the *only* fallback. When text contains anything the
+  merge table can't compress (rare unicode, control characters, non-UTF-8 bytes), encoding falls
+  back to raw bytes. If a byte token is missing from the draft list, every position that needs it
+  is a **guaranteed rejection**. This is the one cut you must never make.
+- **IDs 256–1023 are the earliest, shortest merges** (`th`, `in`, ` the`-class building blocks).
+  Nearly every token in real text decomposes into these, so verification cascades touch them
+  constantly. Keeping them is cheap: draft-head cost scales with list *size*, not which IDs.
+
+Where the heuristic needs care:
+
+- **The 1024 cutoff is arbitrary** — a sensible fraction of a 150K vocab, not a law. For 32K-vocab
+  models (Llama 2 and older), 1024 is a much bigger share of the useful range; tune `--keep-below`
+  to taste. Nothing in the engine requires 1024 specifically.
+- **Special tokens don't reliably live in the low range.** Chat template markers, tool-call tokens
+  and the like often sit at the very *end* of modern vocabs (Qwen's `<|im_start|>` is ~151k). That's
+  what `--added-tokens` is for: it keeps them wherever they are. **If your traffic has any chat
+  template, tool use, or structured output, always pass `--added-tokens`** — otherwise the draft
+  model can never propose those tokens and every template boundary forces a rejection, which is a
+  large acceptance-length hit at exactly the positions that matter most.
+- **SentencePiece-style models** (LLaMA 1/2, Gemma) sort differently: byte-fallback pieces
+  (`<0x20>`–`<0xFF>`) don't start at 0. They still land below 1024, so the default covers them,
+  but don't assume the 0–255 story maps one-to-one.
+- Some low IDs are dead training artifacts; keeping them costs nothing (rows are paid for per ID
+  in the list, not per frequency).
+
+Quick sanity check — where do your model's specials actually live?
+
+```bash
+python3 -c "import json; t=json.load(open('/tmp/tokenizers/<org>/<model>/tokenizer.json')); \
+print([t['id'] for t in t['added_tokens']][:20])"
+```
+
+If IDs above `--keep-below` appear and you didn't pass `--added-tokens`, that's an acceptance leak.
+
 ## Workflow: corpus split across machines
 
 1. On each machine (installed tool or standalone script) just name the model — no tokenizer copy needed:
