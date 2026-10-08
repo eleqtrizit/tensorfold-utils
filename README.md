@@ -73,7 +73,9 @@ state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `
 `coverage/`, `.terraform/`, `.DS_Store`, `Thumbs.db`, `.log`, `.tmp`, `.bak`, `.env`, `.pem`,
 `id_rsa`). The full list lives in `ALWAYS_EXCLUDE` in `draft_vocab.py`. A cheap binary sniff (git's
 heuristic: NUL byte or known magic numbers — PNG/zip/ELF/PDF/SQLite/… — in the first 8KB) rejects
-non-text files before they're decoded, so blobs never poison the counts.
+non-text files before they're decoded, so blobs never poison the counts. Every skipped file is
+tallied and reported as `"skipped": N` in the JSON; run with `-v`/`--verbose` to print each skipped
+path and its reason (binary / not utf-8 / unreadable / empty) to stderr.
 **This is the counting half of the split workflow** — no size/limit decisions
 happen here; those all happen at merge time. A live status line (braille spinner + running `files`/
 `tokens` counts + the current path) is drawn on stderr while it works, then cleared for the final

@@ -186,6 +186,8 @@ def main() -> int:
                    help="corpus file, directory (walked recursively), or glob (repeatable)")
     p.add_argument("-e", "--exclude", action="append", default=[], metavar="STRING",
                    help="skip files whose path contains STRING (repeatable, e.g. -e .venv -e node_modules)")
+    p.add_argument("-v", "--verbose", action="store_true",
+                   help="print each skipped file (binary, non-utf-8, unreadable, empty) to stderr")
     p.add_argument("-o", "--out", default=None, metavar="FILE",
                    help="output counts JSON (default: <hostname>.json)")
     args = p.parse_args()
@@ -193,18 +195,31 @@ def main() -> int:
     tok_path = resolve_tokenizer(args.tokenizer)
     tok = Tokenizer.from_file(tok_path)
     counts: collections.Counter = collections.Counter()
-    total = used = 0
+    total = used = skipped = 0
     status = Status()
     for path in expand_paths(args.path, args.exclude):
         status.update(path, used, total)
         if not looks_like_text(path):
+            skipped += 1
+            if args.verbose:
+                print(f"tf-util: skipped (binary): {path}", file=sys.stderr)
             continue
         try:
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
-        except (UnicodeDecodeError, OSError, IsADirectoryError):
+        except UnicodeDecodeError:
+            skipped += 1
+            if args.verbose:
+                print(f"tf-util: skipped (not utf-8): {path}", file=sys.stderr)
+            continue
+        except (OSError, IsADirectoryError):
+            skipped += 1
+            if args.verbose:
+                print(f"tf-util: skipped (unreadable): {path}", file=sys.stderr)
             continue
         if not text:
+            if args.verbose:
+                print(f"tf-util: skipped (empty): {path}", file=sys.stderr)
             continue
         ids = tok.encode(text).ids
         counts.update(ids)
@@ -218,7 +233,7 @@ def main() -> int:
         json.dump({"host": host,
                    "count_files": used, "count_tokens": total,
                    "counts": {str(k): v for k, v in sorted(counts.items())}}, handle)
-    print(json.dumps({"wrote": out, "files": used, "tokens": total}))
+    print(json.dumps({"wrote": out, "files": used, "tokens": total, "skipped": skipped}))
     return 0
 
 
