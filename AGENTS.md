@@ -46,7 +46,9 @@ downloads just `tokenizer.json` via the `hf` CLI into `$TF_TOKENIZER_CACHE` (def
 `/tmp/tokenizers`)/`<repo>`/`tokenizer.json` and reuses the cached file; pin a revision with
 `@revision` for byte-reproducible counts.
 
-`-p` accepts a file, a directory (walked recursively), or a glob; repeatable. Tokenizes every matched
+`-p` accepts a file, a directory (walked recursively), or a glob; repeatable. `-e`/`--exclude` takes a
+substring: any file whose path contains it is skipped (repeatable, e.g. `-e .venv -e node_modules`).
+Tokenizes every matched
 file in full (no size limit) and writes a per-host counts JSON — default `<hostname>.json`
 (e.g. `vyper.json`), override with `-o`. The JSON has `host`, `count_files`, `count_tokens`, `counts`.
 Counting only: all selection limits live in `merge`. A live status line (braille spinner + running

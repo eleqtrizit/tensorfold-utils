@@ -59,18 +59,28 @@ class Status:
         sys.stderr.flush()
 
 
-def expand_paths(paths: list[str]) -> list[str]:
-    """Expand each path: a file is itself, a directory is walked recursively, a glob is expanded."""
+def expand_paths(paths: list[str], excludes: list[str] | None = None) -> list[str]:
+    """Expand each path: a file is itself, a directory is walked recursively, a glob is expanded.
+
+    `excludes` are substrings: any path containing one is dropped (e.g. -e .venv -e node_modules).
+    """
+    excludes = excludes or []
+
+    def excluded(path: str) -> bool:
+        return any(pat in path for pat in excludes)
+
     files: set[str] = set()
     for path in paths:
         if os.path.isfile(path):
-            files.add(path)
+            if not excluded(path):
+                files.add(path)
         elif os.path.isdir(path):
             files.update(os.path.join(root, name)
-                         for root, _, names in os.walk(path) for name in names)
+                         for root, _, names in os.walk(path) for name in names
+                         if not excluded(os.path.join(root, name)))
         else:
             matched = glob.glob(path, recursive=True)
-            files.update(f for f in matched if os.path.isfile(f))
+            files.update(f for f in matched if os.path.isfile(f) and not excluded(f))
     return sorted(files)
 
 
@@ -81,6 +91,8 @@ def main(argv: list[str] | None = None) -> int:
                    f"(default {cache_root()}/<repo>/tokenizer.json) on first use")
     p.add_argument("-p", "--path", action="append", required=True, metavar="PATH",
                    help="corpus file, directory (walked recursively), or glob (repeatable)")
+    p.add_argument("-e", "--exclude", action="append", default=[], metavar="STRING",
+                   help="skip files whose path contains STRING (repeatable, e.g. -e .venv -e node_modules)")
     p.add_argument("-o", "--out", default=None, metavar="FILE",
                    help="output counts JSON (default: <hostname>.json)")
     args = p.parse_args(argv)
@@ -90,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     counts: collections.Counter = collections.Counter()
     total = used = 0
     status = Status()
-    for path in expand_paths(args.path):
+    for path in expand_paths(args.path, args.exclude):
         status.update(path, used, total)
         try:
             with open(path, encoding="utf-8") as handle:

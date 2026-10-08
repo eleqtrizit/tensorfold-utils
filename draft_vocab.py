@@ -100,17 +100,25 @@ def resolve_tokenizer(arg: str) -> str:
     return target
 
 
-def expand_paths(paths: list[str]) -> list[str]:
+def expand_paths(paths: list[str], excludes: list[str] | None = None) -> list[str]:
+    """Expand paths; `excludes` are substrings dropped from the result (e.g. -e .venv)."""
+    excludes = excludes or []
+
+    def excluded(path: str) -> bool:
+        return any(pat in path for pat in excludes)
+
     files: set[str] = set()
     for path in paths:
         if os.path.isfile(path):
-            files.add(path)
+            if not excluded(path):
+                files.add(path)
         elif os.path.isdir(path):
             files.update(os.path.join(root, name)
-                         for root, _, names in os.walk(path) for name in names)
+                         for root, _, names in os.walk(path) for name in names
+                         if not excluded(os.path.join(root, name)))
         else:
             matched = glob.glob(path, recursive=True)
-            files.update(f for f in matched if os.path.isfile(f))
+            files.update(f for f in matched if os.path.isfile(f) and not excluded(f))
     return sorted(files)
 
 
@@ -120,6 +128,8 @@ def main() -> int:
                    "(`org/model` or `org/model@revision`)")
     p.add_argument("-p", "--path", action="append", required=True, metavar="PATH",
                    help="corpus file, directory (walked recursively), or glob (repeatable)")
+    p.add_argument("-e", "--exclude", action="append", default=[], metavar="STRING",
+                   help="skip files whose path contains STRING (repeatable, e.g. -e .venv -e node_modules)")
     p.add_argument("-o", "--out", default=None, metavar="FILE",
                    help="output counts JSON (default: <hostname>.json)")
     args = p.parse_args()
@@ -129,7 +139,7 @@ def main() -> int:
     counts: collections.Counter = collections.Counter()
     total = used = 0
     status = Status()
-    for path in expand_paths(args.path):
+    for path in expand_paths(args.path, args.exclude):
         status.update(path, used, total)
         try:
             with open(path, encoding="utf-8") as handle:

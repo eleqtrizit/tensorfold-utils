@@ -2,7 +2,7 @@
 
 Example for GLM 5.3 Flash (https://huggingface.co/zai-org/GLM-5.3-Flash).  Run on as many machines as you want:
 
-    tf-util make-vocab zai-org/GLM-5.3-Flash -p PATH1 -p PATH2
+    tf-util make-vocab zai-org/GLM-5.3-Flash -p PATH1 -p PATH2 [-e .venv -e node_modules]
 
 then merge all results:
 
@@ -12,7 +12,7 @@ TOKENIZER is a local tokenizer.json path OR a Hugging Face repo id
 (`org/model`, `org/model@revision`, or a bare id like `gpt2`); a repo id is
 fetched via the `hf` CLI into $TF_TOKENIZER_CACHE (default /tmp/tokenizers)/<repo>/.
 
-  tf-util make-vocab TOKENIZER -p PATH [-p PATH ...] [-o OUT.json]    count a corpus; writes <hostname>.json
+  tf-util make-vocab TOKENIZER -p PATH [-p PATH ...] [-e STRING ...] [-o OUT.json]    count a corpus; writes <hostname>.json
   tf-util merge TOKENIZER COUNTS.json [--out OUT.txt] [--size N] [--min-count N] [--keep-below N] [--added-tokens]
 """
 

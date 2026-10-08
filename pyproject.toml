@@ -1,6 +1,6 @@
 [project]
 name = "tensorfold-utils"
-version = "0.3.2"
+version = "0.3.3"
 description = "Draft-vocabulary builders for TensorFold / vLLM MTP speculative decoding"
 readme = "README.md"
 requires-python = ">=3.11"
