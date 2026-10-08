@@ -128,6 +128,19 @@ ALWAYS_EXCLUDE = (
     ".cache/", "coverage/", ".sass-cache", ".terraform/", ".serverless/",
     ".DS_Store", "Thumbs.db", ".log", ".tmp", ".bak",
     ".env", ".pem", "id_rsa",
+    # Data / config / serialized / media formats (not prose; tokenizing skews counts).
+    # Note: these are path substrings, so ".json" also covers ".jsonl".
+    ".csv", ".tsv", ".psv", ".parquet", ".avro", ".orc", ".feather", ".arrow",
+    ".json", ".yaml", ".yml", ".toml", ".xml", ".ini", ".cfg", ".conf",
+    ".xlsx", ".xls", ".ods", ".db", ".sqlite", ".sqlite3", ".mdb", ".sql",
+    ".h5", ".hdf5", ".pkl", ".pickle", ".npy", ".npz", ".pt", ".pth", ".ckpt",
+    ".safetensors", ".onnx", ".gguf", ".bin",
+    ".zip", ".tar", ".gz", ".bz2", ".xz", ".zst", ".7z", ".rar",
+    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".tiff",
+    ".mp3", ".mp4", ".wav", ".flac", ".ogg", ".webm", ".avi", ".mkv", ".mov",
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".epub",
+    ".woff", ".woff2", ".ttf", ".otf", ".eot", ".so", ".dylib", ".dll", ".exe",
+    ".wasm", ".pyc", ".pyo", ".class", ".jar",
 )
 
 

@@ -69,9 +69,14 @@ from the walk entirely — VCS internals (`.git`, `.hg`, `.svn`), JS ecosystems 
 caches, `site-packages/`, `.ipynb_checkpoints`), build outputs (`target/`, `build/`, `dist/`,
 `out/`, `.gradle/`), vendored/IDE (`vendor/`, `.idea/`, `.vscode/`, swap files), AI/agent tool
 state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `.copilot*`,
-`.continue`, `.windsurf`, `.codeium`, `.tabnine`), and caches/logs/temp/secrets (`.cache/`,
+`.continue`, `.windsurf`, `.codeium`, `.tabnine`), caches/logs/temp/secrets (`.cache/`,
 `coverage/`, `.terraform/`, `.DS_Store`, `Thumbs.db`, `.log`, `.tmp`, `.bak`, `.env`, `.pem`,
-`id_rsa`). The full list lives in `ALWAYS_EXCLUDE` in `draft_vocab.py`. A cheap binary sniff (git's
+`id_rsa`), and data/config/serialized/media extensions (`.csv`, `.tsv`, `.parquet`, `.avro`,
+`.feather`, `.json`, `.yaml`, `.toml`, `.xml`, `.ini`, `.xlsx`, `.db`, `.sqlite`, `.sql`,
+`.h5`, `.pkl`, `.npy`, `.npz`, `.pt`, `.ckpt`, `.safetensors`, `.onnx`, `.gguf`, `.bin`,
+`.zip`, `.tar`, `.gz`, `.zst`, image/audio/video extensions, `.pdf`/Office docs, fonts, and
+compiled objects like `.so`/`.dll`/`.pyc`/`.jar`). These are plain path substrings — `.json`
+also covers `.jsonl`, `.doc` covers `.docx`. The full list lives in `ALWAYS_EXCLUDE`. A cheap binary sniff (git's
 heuristic: NUL byte or known magic numbers — PNG/zip/ELF/PDF/SQLite/… — in the first 8KB) rejects
 non-text files before they're decoded, so blobs never poison the counts. Every skipped file is
 tallied and reported as `"skipped": N` in the JSON; run with `-v`/`--verbose` to print each skipped
