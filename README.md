@@ -75,7 +75,9 @@ state (`.claude`, `.pi`, `.agents`, `.codex`, `.aider*`, `.cursor`, `.gemini`, `
 heuristic: NUL byte or known magic numbers — PNG/zip/ELF/PDF/SQLite/… — in the first 8KB) rejects
 non-text files before they're decoded, so blobs never poison the counts. Every skipped file is
 tallied and reported as `"skipped": N` in the JSON; run with `-v`/`--verbose` to print each skipped
-path and its reason (binary / not utf-8 / unreadable / empty) to stderr.
+path and its reason (binary / not utf-8 / unreadable / empty) to stderr. Rejected files also flash
+briefly on the live status line with a trailing `skipped (binary)` marker instead of being shown
+as if they were being tokenized.
 **This is the counting half of the split workflow** — no size/limit decisions
 happen here; those all happen at merge time. A live status line (braille spinner + running `files`/
 `tokens` counts + the current path) is drawn on stderr while it works, then cleared for the final

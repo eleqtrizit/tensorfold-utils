@@ -45,7 +45,7 @@ class Status:
     def __init__(self) -> None:
         self._i = 0
 
-    def update(self, path: str, files: int, tokens: int) -> None:
+    def update(self, path: str, files: int, tokens: int, note: str = "") -> None:
         if not sys.stderr.isatty():
             return
         cols = shutil.get_terminal_size((80, 24)).columns
@@ -53,6 +53,9 @@ class Status:
         self._i += 1
         head = f"{spin} {files} files · {tokens:,} tokens · "
         body = _truncate(path, max(8, cols - len(head) - 1))
+        if note:  # e.g. 'skipped (binary)' shown on the same line
+            body = _truncate(path, max(8, cols - len(head) - len(note) - 2))
+            body += f" {note}"
         line = head + body
         sys.stderr.write("\r" + line.ljust(cols - 1)[: cols - 1])
         sys.stderr.flush()
@@ -198,12 +201,13 @@ def main() -> int:
     total = used = skipped = 0
     status = Status()
     for path in expand_paths(args.path, args.exclude):
-        status.update(path, used, total)
         if not looks_like_text(path):
             skipped += 1
+            status.update(path, used, total, note="skipped (binary)")
             if args.verbose:
                 print(f"tf-util: skipped (binary): {path}", file=sys.stderr)
             continue
+        status.update(path, used, total)
         try:
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
