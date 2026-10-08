@@ -62,7 +62,9 @@ Alias: `uv run draft_vocab.py ...` (self-contained PEP 723 script; logic in `src
 Tokenizes the corpus files given via `-p` (repeatable: files, directories, or globs) and writes the
 raw per-ID counts as a portable, mergeable JSON file named after the host by default (`vyper.json`),
 including a `host` key. **This is the counting half of the split workflow** — no size/limit decisions
-happen here; those all happen at merge time.
+happen here; those all happen at merge time. A live status line (braille spinner + running `files`/
+`tokens` counts + the current path) is drawn on stderr while it works, then cleared for the final
+JSON (auto-disabled when stderr isn't a TTY, so piping stays clean).
 
 ### `merge`
 

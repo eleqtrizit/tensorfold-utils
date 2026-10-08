@@ -26,8 +26,43 @@ import shutil
 import socket
 import subprocess
 import sys
+import time
 
 from tokenizers import Tokenizer
+
+_SPINNER = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+
+def _truncate(path: str, width: int) -> str:
+    if len(path) <= width:
+        return path
+    return "…" + path[-(width - 1):]
+
+
+class Status:
+    """Single-line live status on stderr that overwrites itself with \\r."""
+
+    def __init__(self) -> None:
+        self._i = 0
+
+    def update(self, path: str, files: int, tokens: int) -> None:
+        if not sys.stderr.isatty():
+            return
+        cols = shutil.get_terminal_size((80, 24)).columns
+        spin = _SPINNER[self._i % len(_SPINNER)]
+        self._i += 1
+        head = f"{spin} {files} files · {tokens:,} tokens · "
+        body = _truncate(path, max(8, cols - len(head) - 1))
+        line = head + body
+        sys.stderr.write("\r" + line.ljust(cols - 1)[: cols - 1])
+        sys.stderr.flush()
+
+    def clear(self) -> None:
+        if not sys.stderr.isatty():
+            return
+        cols = shutil.get_terminal_size((80, 24)).columns
+        sys.stderr.write("\r" + " " * (cols - 1) + "\r")
+        sys.stderr.flush()
 
 
 def _cache_root() -> str:
@@ -93,7 +128,9 @@ def main() -> int:
     tok = Tokenizer.from_file(tok_path)
     counts: collections.Counter = collections.Counter()
     total = used = 0
+    status = Status()
     for path in expand_paths(args.path):
+        status.update(path, used, total)
         try:
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
@@ -105,6 +142,7 @@ def main() -> int:
         counts.update(ids)
         total += len(ids)
         used += 1
+    status.clear()
 
     host = socket.gethostname()
     out = args.out or f"{host}.json"

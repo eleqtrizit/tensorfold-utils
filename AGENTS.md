@@ -49,7 +49,9 @@ downloads just `tokenizer.json` via the `hf` CLI into `$TF_TOKENIZER_CACHE` (def
 `-p` accepts a file, a directory (walked recursively), or a glob; repeatable. Tokenizes every matched
 file in full (no size limit) and writes a per-host counts JSON — default `<hostname>.json`
 (e.g. `vyper.json`), override with `-o`. The JSON has `host`, `count_files`, `count_tokens`, `counts`.
-Counting only: all selection limits live in `merge`.
+Counting only: all selection limits live in `merge`. A live status line (braille spinner + running
+files/tokens + current path) is drawn on stderr while parsing, then cleared for the final JSON;
+auto-disabled when stderr isn't a TTY.
 
 ### `tf-util merge` — sum counts, select vocab
 
