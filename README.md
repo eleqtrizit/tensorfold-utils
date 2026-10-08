@@ -43,9 +43,9 @@ commands.
 # Count a corpus on this machine; writes counts JSON (default: <hostname>.json, e.g. vyper.json)
 tf-util make-vocab TOKENIZER -p PATH [-p PATH ...] [-o OUT.json]
 
-# Sum counts files, then select the vocab (all limits live here)
-tf-util merge TOKENIZER OUT.txt [--size 32768] [--min-count 10] \
-        [--keep-below 1024] [--added-tokens] a.json b.json ...
+# Sum counts files, then select the vocab (all limits live here); writes draft_vocab.txt by default
+tf-util merge TOKENIZER COUNTS.json [...] [--out OUT.txt] [--size 32768] \
+        [--min-count 10] [--keep-below 1024] [--added-tokens]
 ```
 
 `TOKENIZER` is either a path to a local `tokenizer.json` **or** a Hugging Face repo id
@@ -70,12 +70,14 @@ Alias: `uv run merge_draft_vocab.py ...`, logic in `src/tf_util/merge_draft_voca
 
 Sums the counts from one or more counts files and selects the draft vocabulary: all IDs below
 `--keep-below` (default 1024), optionally all tokenizer added tokens (`--added-tokens`), then
-frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest unused IDs. The result
-is **byte-identical** to counting the union corpus in a single run (verified with `cmp`). The counts
+frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest unused IDs, writing
+the newline-separated ID list to `--out` (default `draft_vocab.txt`). The result is
+**byte-identical** to counting the union corpus in a single run (verified with `cmp`). The counts
 files are small (one entry per appearing ID, KBs–MBs), so they ship easily.
 
-The JSON stats include `coverage` — the fraction of corpus tokens covered by the selected vocab, i.e. the
-expected acceptance ceiling *on that corpus*.
+Both commands print a JSON one-liner to stdout naming every file they wrote (`"wrote"` key) plus
+stats; `merge`'s stats include `coverage` — the fraction of corpus tokens covered by the selected
+vocab, i.e. the expected acceptance ceiling *on that corpus*.
 
 ## Workflow: corpus split across machines
 
@@ -86,9 +88,9 @@ expected acceptance ceiling *on that corpus*.
    Pin a revision with `@revision` if you want byte-reproducible counts. The `hf` CLI must be on
    PATH (and `HF_TOKEN` set for gated repos).
 2. Ship the `local.json` files back (any channel).
-3. Merge once, deciding size/min-count a single time:
+3. Merge once, deciding size/min-count a single time (writes `draft_vocab.txt` by default):
    ```bash
-   tf-util merge nvidia/Nemotron-Super-3.5-GA-FINAL-row105-QAD-PreStitched-BoostedMTP draft_vocab.txt \
+   tf-util merge nvidia/Nemotron-Super-3.5-GA-FINAL-row105-QAD-PreStitched-BoostedMTP \
        --size 32768 --min-count 10 *.json
    ```
 

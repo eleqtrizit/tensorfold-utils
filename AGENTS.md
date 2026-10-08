@@ -54,10 +54,12 @@ Counting only: all selection limits live in `merge`.
 ### `tf-util merge` — sum counts, select vocab
 
 ```bash
-tf-util merge TOKENIZER OUT.txt --size 32768 --min-count 10 a.json b.json ... [--keep-below 1024] [--added-tokens]
+tf-util merge TOKENIZER a.json b.json ... [--out draft_vocab.txt] [--size 32768] [--min-count 10] [--keep-below 1024] [--added-tokens]
 ```
 
-`TOKENIZER` accepts a local path or an HF repo id (same resolution as `make-vocab`).
+`TOKENIZER` accepts a local path or an HF repo id (same resolution as `make-vocab`). Writes the
+newline-separated ID list to `--out` (default `draft_vocab.txt`). Both commands print a JSON
+one-liner to stdout with a `"wrote"` key naming every file written plus stats.
 
 Sums the counts files, then keeps all IDs below `--keep-below` (default 1024), optionally the tokenizer's
 added tokens, then frequency-ranked IDs down to `--min-count`, padded to `--size` with the lowest unused
@@ -71,9 +73,9 @@ IDs. Merging is plain count addition, so the result equals a single run over the
    ```
    Pin `@revision` for byte-reproducible counts; `hf` must be on PATH (`HF_TOKEN` for gated repos).
 2. Ship the `local.json` files back (any channel).
-3. Merge once, deciding size/min-count a single time:
+3. Merge once, deciding size/min-count a single time (writes `draft_vocab.txt` by default):
    ```bash
-   tf-util merge org/model@revision draft_vocab.txt --size 32768 --min-count 10 *.json
+   tf-util merge org/model@revision --size 32768 --min-count 10 *.json
    ```
 
 The output format matches the engine's expectation (plain newline-separated integer IDs; runtime pads to

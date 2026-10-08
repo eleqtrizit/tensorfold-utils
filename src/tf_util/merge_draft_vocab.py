@@ -21,8 +21,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("tokenizer", help="path to tokenizer.json OR a Hugging Face repo id "
                    "(`org/model` or `org/model@revision`); fetched into $TF_TOKENIZER_CACHE "
                    f"(default {cache_root()}/<repo>/tokenizer.json) on first use")
-    p.add_argument("out")
-    p.add_argument("counts", nargs="+", help="counts JSON files written by make-vocab --counts-out")
+    p.add_argument("counts", nargs="+", help="counts JSON files written by make-vocab")
+    p.add_argument("--out", default="draft_vocab.txt", metavar="FILE",
+                   help="output vocab txt (default: draft_vocab.txt)")
     p.add_argument("--size", type=int, default=32768)
     p.add_argument("--keep-below", type=int, default=1024, help="always keep ids below this (special tokens)")
     p.add_argument("--min-count", type=int, default=10,
@@ -55,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     covered = sum(c for t, c in counts.items() if t in keep)
     with open(args.out, "w") as handle:
         handle.write("\n".join(str(i) for i in ids) + "\n")
-    print(json.dumps({"counts_files": len(args.counts), "files": files, "tokens": tokens, "size": len(ids),
+    print(json.dumps({"wrote": args.out, "counts_files": len(args.counts), "files": files,
+                      "tokens": tokens, "size": len(ids),
                       "coverage": round(covered / max(1, tokens), 4),
                       "from_counts": sum(1 for t, c in counts.items() if c >= args.min_count and t in keep)}))
     return 0

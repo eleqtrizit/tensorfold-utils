@@ -112,7 +112,7 @@ def main() -> int:
         json.dump({"host": host,
                    "count_files": used, "count_tokens": total,
                    "counts": {str(k): v for k, v in sorted(counts.items())}}, handle)
-    print(json.dumps({"out": out, "files": used, "tokens": total}))
+    print(json.dumps({"wrote": out, "files": used, "tokens": total}))
     return 0
 
 
