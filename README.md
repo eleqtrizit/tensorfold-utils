@@ -1,5 +1,7 @@
 # tensorfold-utils
 
+[![Repo](https://img.shields.io/badge/github-eleqtrizit%2Ftensorfold--utils-blue)](https://github.com/eleqtrizit/tensorfold-utils)
+
 Standalone helpers for building **draft vocabularies** for [TensorFold](https://github.com/ashhart/TensorFold)
 and the related vLLM work ([PR #59740](https://github.com/vllm-project/vllm/pull/59740)).
 They deliberately live outside the main repo: **count a corpus wherever the text is, then merge the counts anywhere.**
@@ -22,8 +24,8 @@ special tokens.
 ## Install
 
 ```bash
-uv tool install git+https://github.com/.../tensorfold-utils   # from a git URL
-uv tool install .                                             # or from a local checkout
+uv tool install git+https://github.com/eleqtrizit/tensorfold-utils   # from this repo
+uv tool install /path/to/tensorfold-utils                            # or from a local checkout
 ```
 
 This installs a `tf-util` executable on your PATH. The repo also ships standalone PEP 723 scripts
